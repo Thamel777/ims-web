@@ -47,7 +47,7 @@ export default function Dashboard() {
           </div>
           <div className="stat-info">
             <span className="stat-label">Total Inventory Value</span>
-            <span className="stat-value">${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+            <span className="stat-value">LKR {totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
           </div>
         </div>
       </div>

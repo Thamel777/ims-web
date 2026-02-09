@@ -45,7 +45,7 @@ const BarcodeModal = ({ isOpen, onClose, item }: BarcodeModalProps) => {
                         <div className="barcode-sticker">
                             <div className="sticker-header">
                                 <span className="company-name">IMS Web</span>
-                                <span className="item-price">${item.unitPrice?.toFixed(2)}</span>
+                                <span className="item-price">LKR {item.unitPrice?.toFixed(2)}</span>
                             </div>
                             <div className="item-name">{item.name}</div>
                             <div className="barcode-wrapper">

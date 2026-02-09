@@ -167,7 +167,7 @@ export default function InventoryPage() {
                                     </span>
                                 </td>
                                 <td>{item.location}</td>
-                                <td>${(item.unitPrice || 0).toFixed(2)}</td>
+                                <td>LKR {(item.unitPrice || 0).toFixed(2)}</td>
                                 <td className="actions">
                                     <button onClick={() => handlePrint(item)} className="btn-icon" title="Print Barcode">
                                         <Printer size={16} />

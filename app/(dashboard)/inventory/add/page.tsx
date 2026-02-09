@@ -12,7 +12,8 @@ import {
     ArrowLeft,
     Check,
     AlertCircle,
-    Download
+    Download,
+    RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 
@@ -66,16 +67,29 @@ export default function AddInventoryPage() {
             [name]: (name.includes("Stock") || name === "unitPrice") ? Number(value) : value
         }));
     };
+    const generateBarcode = () => {
+        const timestamp = Date.now().toString().slice(-6);
+        const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+        return `${timestamp}${random}`;
+    };
 
+    const handleAutoGenerate = () => {
+        setNewItem(prev => ({ ...prev, barcode: generateBarcode() }));
+    };
     const handleManualSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
+            const finalItem = { ...newItem };
+            if (!finalItem.barcode) {
+                finalItem.barcode = generateBarcode();
+            }
+
             const inventoryRef = ref(rtdb, "inventory");
             const newItemRef = push(inventoryRef);
             await set(newItemRef, {
-                ...newItem,
+                ...finalItem,
                 id: newItemRef.key,
                 lastRestocked: new Date().toISOString()
             });
@@ -332,13 +346,18 @@ export default function AddInventoryPage() {
                                 </div>
                                 <div className="form-group">
                                     <label>Barcode</label>
-                                    <input
-                                        name="barcode"
-                                        value={newItem.barcode}
-                                        onChange={handleManualChange}
-                                        className="input"
-                                        placeholder="Scan barcode..."
-                                    />
+                                    <div className="input-group">
+                                        <input
+                                            name="barcode"
+                                            value={newItem.barcode}
+                                            onChange={handleManualChange}
+                                            className="input"
+                                            placeholder="Leave empty to auto-generate"
+                                        />
+                                        <button type="button" onClick={handleAutoGenerate} className="btn-icon" title="Generate Random Barcode">
+                                            <RefreshCw size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="form-group">
                                     <label>Category</label>
@@ -381,7 +400,7 @@ export default function AddInventoryPage() {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Unit Price ($)</label>
+                                    <label>Unit Price (LKR)</label>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -490,7 +509,7 @@ export default function AddInventoryPage() {
                                                     <td>{item.name || <span className="text-muted">-</span>}</td>
                                                     <td>{item.sku || <span className="text-muted">-</span>}</td>
                                                     <td>{item.currentStock}</td>
-                                                    <td>${item.unitPrice.toFixed(2)}</td>
+                                                    <td>LKR {item.unitPrice.toFixed(2)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -630,6 +649,33 @@ export default function AddInventoryPage() {
 
                 .upload-icon {
                     color: rgb(var(--primary));
+                }
+
+                .input-group {
+                    display: flex;
+                    gap: 0.5rem;
+                    align-items: center;
+                }
+
+                .input-group .input {
+                    flex: 1;
+                }
+
+                .btn-icon {
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    color: rgb(var(--text-secondary));
+                    padding: 0.5rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .btn-icon:hover {
+                    color: rgb(var(--primary));
+                    background: rgb(var(--primary) / 0.1);
+                    border-radius: var(--radius);
                 }
 
                 .template-link {
