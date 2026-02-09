@@ -1,21 +1,24 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import {getFirestore} from 'firebase/firestore'
+import { getFirestore } from 'firebase/firestore';
+import { getDatabase } from 'firebase/database';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAbBM2f5np9bM9_qOoJ85m36lSTFJVk7uo",
+  apiKey: "AIzaSyBog9IXvOZUucLzEK2pIThOLbzbY1JjTwA",
   authDomain: "ims-cross-app.firebaseapp.com",
   databaseURL: "https://ims-cross-app-default-rtdb.firebaseio.com",
   projectId: "ims-cross-app",
   storageBucket: "ims-cross-app.firebasestorage.app",
   messagingSenderId: "769332407701",
-  appId: "1:769332407701:web:placeholder", // This may fail if appId is strictly required for certain features
+  appId: "1:769332407701:web:f61e3f00d4098bc2dc9a9c",
+  measurementId: "G-GQET7LG642"
 };
 
 // Initialize Firebase
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const rtdb = getDatabase(app);
 
-export {app, auth, db};
+export { app, auth, db, rtdb };

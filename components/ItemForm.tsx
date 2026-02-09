@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Item } from "@/lib/hooks/useInventory";
-import { X } from "lucide-react";
+import { X, RefreshCw } from "lucide-react";
 
 interface ItemFormProps {
     initialData?: Item;
@@ -34,10 +34,26 @@ export default function ItemForm({ initialData, onSubmit, onCancel, isLoading }:
         }));
     };
 
+    const generateBarcode = () => {
+        // Generate a random 12-digit number (EAN-13 compatible-ish)
+        const timestamp = Date.now().toString().slice(-6);
+        const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+        return `${timestamp}${random}`;
+    };
+
+    const handleAutoGenerate = () => {
+        setFormData(prev => ({ ...prev, barcode: generateBarcode() }));
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Validate?
-        onSubmit(formData as Omit<Item, "id" | "lastRestocked">);
+        
+        const submissionData = { ...formData };
+        if (!submissionData.barcode) {
+            submissionData.barcode = generateBarcode();
+        }
+
+        onSubmit(submissionData as Omit<Item, "id" | "lastRestocked">);
     };
 
     return (
@@ -62,7 +78,18 @@ export default function ItemForm({ initialData, onSubmit, onCancel, isLoading }:
                         </div>
                         <div className="form-group">
                             <label>Barcode</label>
-                            <input name="barcode" value={formData.barcode} onChange={handleChange} required className="input" />
+                            <div className="input-group">
+                                <input 
+                                    name="barcode" 
+                                    value={formData.barcode} 
+                                    onChange={handleChange} 
+                                    className="input" 
+                                    placeholder="Leave empty to auto-generate"
+                                />
+                                <button type="button" onClick={handleAutoGenerate} className="btn-icon" title="Generate Random Barcode">
+                                    <RefreshCw size={18} />
+                                </button>
+                            </div>
                         </div>
                         <div className="form-group">
                             <label>Category</label>
@@ -81,7 +108,7 @@ export default function ItemForm({ initialData, onSubmit, onCancel, isLoading }:
                             <input type="number" name="maxStock" value={formData.maxStock} onChange={handleChange} required className="input" />
                         </div>
                         <div className="form-group">
-                            <label>Unit Price ($)</label>
+                            <label>Unit Price (LKR)</label>
                             <input type="number" step="0.01" name="unitPrice" value={formData.unitPrice} onChange={handleChange} required className="input" />
                         </div>
                         <div className="form-group">
@@ -155,6 +182,16 @@ export default function ItemForm({ initialData, onSubmit, onCancel, isLoading }:
 
         .full-width {
           grid-column: span 2;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .input-group .input {
+            flex: 1;
         }
 
         .form-group {
