@@ -4,7 +4,8 @@ import { useInventory, Item } from "@/lib/hooks/useInventory";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ItemForm from "@/components/ItemForm";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import BarcodeModal from "@/components/BarcodeModal";
+import { Plus, Edit, Trash2, Printer } from "lucide-react";
 import { ref, update, remove, push, set } from "firebase/database";
 import { rtdb } from "@/lib/firebase";
 import { toast } from "sonner";
@@ -15,9 +16,18 @@ export default function InventoryPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<Item | null>(null);
     const [saving, setSaving] = useState(false);
+    
+    // Barcode/Print state
+    const [printModalOpen, setPrintModalOpen] = useState(false);
+    const [printingItem, setPrintingItem] = useState<Item | null>(null);
 
     const handleAddStart = () => {
         router.push("/inventory/add");
+    };
+
+    const handlePrint = (item: Item) => {
+        setPrintingItem(item);
+        setPrintModalOpen(true);
     };
 
     const handleEditStart = (item: Item) => {
@@ -159,6 +169,9 @@ export default function InventoryPage() {
                                 <td>{item.location}</td>
                                 <td>${(item.unitPrice || 0).toFixed(2)}</td>
                                 <td className="actions">
+                                    <button onClick={() => handlePrint(item)} className="btn-icon" title="Print Barcode">
+                                        <Printer size={16} />
+                                    </button>
                                     <button onClick={() => handleEditStart(item)} className="btn-icon" title="Edit">
                                         <Edit size={16} />
                                     </button>
@@ -187,6 +200,12 @@ export default function InventoryPage() {
                     isLoading={saving}
                 />
             )}
+
+            <BarcodeModal
+                isOpen={printModalOpen}
+                onClose={() => setPrintModalOpen(false)}
+                item={printingItem}
+            />
 
             <style jsx>{`
         .page-header {
