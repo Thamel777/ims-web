@@ -2,21 +2,22 @@
 
 import { useInventory, Item } from "@/lib/hooks/useInventory";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ItemForm from "@/components/ItemForm";
 import { Plus, Edit, Trash2 } from "lucide-react";
-import { collection, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { ref, update, remove, push, set } from "firebase/database";
+import { rtdb } from "@/lib/firebase";
 import { toast } from "sonner";
 
 export default function InventoryPage() {
+    const router = useRouter();
     const { items, loading } = useInventory();
     const [modalOpen, setModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<Item | null>(null);
     const [saving, setSaving] = useState(false);
 
     const handleAddStart = () => {
-        setEditingItem(null);
-        setModalOpen(true);
+        router.push("/inventory/add");
     };
 
     const handleEditStart = (item: Item) => {
@@ -27,16 +28,16 @@ export default function InventoryPage() {
     const handleDelete = async (id: string) => {
         if (confirm("Are you sure you want to delete this item?")) {
             try {
-                await deleteDoc(doc(db, "items", id));
-                toast.success("Item deleted");
+                const itemRef = ref(rtdb, `inventory/${id}`);
+                await remove(itemRef);
+                toast.success("Item deleted from Realtime Database");
             } catch (e) {
+                console.error(e);
                 toast.error("Failed to delete item");
             }
         }
     };
 
-    // We need to carefully handle types here. Item contains id, but form data doesn't (necessarily).
-    // The form component returns the data fields.
     const handleSave = async (data: any) => {
         setSaving(true);
         try {
@@ -46,10 +47,14 @@ export default function InventoryPage() {
             };
 
             if (editingItem) {
-                await updateDoc(doc(db, "items", editingItem.id), payload);
+                const itemRef = ref(rtdb, `inventory/${editingItem.id}`);
+                await update(itemRef, payload);
                 toast.success("Item updated successfully");
             } else {
-                await addDoc(collection(db, "items"), payload);
+                // Should use the add page normally, but in case modal is used...
+                const inventoryRef = ref(rtdb, "inventory");
+                const newItemRef = push(inventoryRef);
+                await set(newItemRef, { ...payload, id: newItemRef.key });
                 toast.success("Item created successfully");
             }
             setModalOpen(false);
@@ -64,16 +69,16 @@ export default function InventoryPage() {
     const [searchTerm, setSearchTerm] = useState("");
 
     const filteredItems = items.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.barcode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchTerm.toLowerCase())
+        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.barcode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.category?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (loading) return (
         <div className="loading-container">
             <div className="spinner"></div>
-            <p>Loading inventory...</p>
+            <p>Loading inventory from Realtime DB...</p>
             <style jsx>{`
             .loading-container {
                 display: flex;
@@ -105,7 +110,7 @@ export default function InventoryPage() {
             <div className="page-header">
                 <div className="header-left">
                     <h1>Inventory Management</h1>
-                    <p className="subtitle">Manage stock, prices, and locations</p>
+                    <p className="subtitle">Realtime sync with mobile app</p>
                 </div>
                 <button onClick={handleAddStart} className="btn btn-primary">
                     <Plus size={18} /> Add New Item
@@ -152,7 +157,7 @@ export default function InventoryPage() {
                                     </span>
                                 </td>
                                 <td>{item.location}</td>
-                                <td>${item.unitPrice.toFixed(2)}</td>
+                                <td>${(item.unitPrice || 0).toFixed(2)}</td>
                                 <td className="actions">
                                     <button onClick={() => handleEditStart(item)} className="btn-icon" title="Edit">
                                         <Edit size={16} />
@@ -166,7 +171,7 @@ export default function InventoryPage() {
                         {filteredItems.length === 0 && (
                             <tr>
                                 <td colSpan={7} className="text-center">
-                                    {items.length === 0 ? "No items found. Add one to get started." : "No matching items found."}
+                                    {items.length === 0 ? "No items found in Realtime DB." : "No matching items found."}
                                 </td>
                             </tr>
                         )}
